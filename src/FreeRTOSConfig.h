@@ -1,51 +1,82 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-#include "pico.h"
+// Incluir apenas headers genéricos que não dependem de configuração
+#include <stdint.h>
+#include <stddef.h>
 
-/* --- 1. NÚCLEO E ESTABILIDADE --- */
-#define configNUMBER_OF_CORES                   1
+/* ========================================================== */
+/* CONFIGURAÇÕES DO KERNEL                    */
+/* ========================================================== */
 #define configUSE_PREEMPTION                    1
+#define configUSE_IDLE_HOOK                     0
+#define configUSE_TICK_HOOK                     0
+#define configUSE_MINIMAL_IDLE_HOOK             0 
 #define configCPU_CLOCK_HZ                      ( 125000000 )
 #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES                    ( 5 )
 #define configMINIMAL_STACK_SIZE                ( ( unsigned short ) 256 )
 #define configMAX_TASK_NAME_LEN                 ( 16 )
-#define configIDLE_SHOULD_YIELD                 1
 
-/* --- 2. SINCRONIZAÇÃO (RESOLVE O ERRO DE LINKAGEM) --- */
-#define configUSE_MUTEXES                       1
-#define configUSE_RECURSIVE_MUTEXES             1
-#define configUSE_COUNTING_SEMAPHORES           1
-#define configUSE_EVENT_GROUPS                  1 // Necessário para o port.c
-#define configSUPPORT_PICO_SYNC_INTEROP         1 // Ativa a integração com o SDK
-#define configUSE_16_BIT_TICKS                  0
-#define configUSE_IDLE_HOOK                     0
-#define configUSE_TICK_HOOK                     0
+/* --- CORREÇÃO DO ERRO DE TICK (08/02) --- */
+/* O RP2040 é 32-bit. Definimos explicitamente a largura do tick. */
+#define configTICK_TYPE_WIDTH_IN_BITS           TICK_TYPE_WIDTH_32_BITS
 
-/* --- 3. TIMERS (ESSENCIAL PARA vEventGroupSetBitsCallback) --- */
-#define configUSE_TIMERS                        1
-#define INCLUDE_xTimerPendFunctionCall          1 // ESTA LINHA É A SOLUÇÃO DO ERRO
-#define configTIMER_TASK_PRIORITY               ( configMAX_PRIORITIES - 1 )
-#define configTIMER_QUEUE_LENGTH                10
-#define configTIMER_TASK_STACK_DEPTH            1024
+/* ========================================================== */
+/* SMP (MULTICORE) & MEMÓRIA                   */
+/* ========================================================== */
+#define configNUMBER_OF_CORES                   2
+#define configRUN_MULTIPLE_PRIORITIES           1
+#define configUSE_CORE_AFFINITY                 1
+#define configTICK_CORE                         0
 
-/* --- 4. GESTÃO DE MEMÓRIA --- */
+/* --- SMP SPINLOCKS (SINCRONIZAÇÃO MULTICORE) --- */
+#define configSMP_SPINLOCK_0                    PICO_SPINLOCK_ID_OS1
+#define configSMP_SPINLOCK_1                    PICO_SPINLOCK_ID_OS2
+
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configTOTAL_HEAP_SIZE                   ( ( size_t ) ( 64 * 1024 ) )
 
-/* --- 5. PERMISSÕES DE API --- */
+/* ========================================================== */
+/* FUNCIONALIDADES DO SISTEMA                 */
+/* ========================================================== */
+#define configUSE_MUTEXES                       1
+#define configUSE_RECURSIVE_MUTEXES             1
+#define configUSE_COUNTING_SEMAPHORES           1
+#define configUSE_TIMERS                        1
+#define configTIMER_TASK_PRIORITY               ( configMAX_PRIORITIES - 1 )
+#define configTIMER_QUEUE_LENGTH                10
+#define configTIMER_TASK_STACK_DEPTH            1024
+#define configUSE_QUEUE_SETS                    1
+#define configUSE_TASK_NOTIFICATIONS            1
+
+/* ========================================================== */
+/* INTEROPERABILIDADE E API                   */
+/* ========================================================== */
+#define configSUPPORT_PICO_SYNC_INTEROP         1
+#define configSUPPORT_PICO_TIME_INTEROP         1
+
 #define INCLUDE_vTaskDelay                      1
+#define INCLUDE_vTaskDelete                     1
 #define INCLUDE_vTaskSuspend                    1
+#define INCLUDE_xTaskGetCurrentTaskHandle       1
+#define INCLUDE_xTaskGetSchedulerState          1
+#define INCLUDE_uxTaskGetStackHighWaterMark     1
 #define INCLUDE_xSemaphoreGetMutexHolder        1
 
-/* --- 6. MAPEAMENTO DE INTERRUPÇÕES RP2040 --- */
-#define vPortSVCHandler    isr_svc
-#define xPortPendSVHandler isr_pendsv
-#define xPortSysTickHandler isr_systick
+/* ========================================================== */
+/* MAPEAMENTO DE INTERRUPÇÕES                   */
+/* ========================================================== */
+#define vPortSVCHandler                         isr_svc
+#define xPortPendSVHandler                      isr_pendsv
+#define xPortSysTickHandler                     isr_systick
 
-/* --- 7. ASSERT SEGURO (RESOLVE O ERRO 'taskDISABLE_INTERRUPTS') --- */
-/* Usamos __breakpoint para Debug ou um loop infinito simples */
-#define configASSERT( x ) if( ( x ) == 0 ) { portDISABLE_INTERRUPTS(); for( ;; ); }
+/* --- CORREÇÃO DE ESCOPO (08/02) --- */
+/* Usamos portDISABLE_INTERRUPTS (nível de hardware) em vez de task... */
+#define configASSERT( x ) \
+    if( ( x ) == 0 ) { \
+        portDISABLE_INTERRUPTS(); \
+        for( ;; ); \
+    }
 
-#endif
+#endif /* FREERTOS_CONFIG_H */

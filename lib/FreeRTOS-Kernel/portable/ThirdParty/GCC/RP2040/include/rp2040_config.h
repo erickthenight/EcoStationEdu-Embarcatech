@@ -1,4 +1,4 @@
-/*
+﻿/*
  * FreeRTOS Kernel V10.4.3
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
@@ -29,25 +29,41 @@
 #ifndef RP2040_CONFIG_H
 #define RP2040_CONFIG_H
 
-/* *INDENT-OFF* */
+/*
+ * *INDENT-OFF* */
 #ifdef __cplusplus
     extern "C" {
 #endif
 /* *INDENT-ON* */
 
-/* FreeRTOS Kernel includes. */
-#include "FreeRTOS.h"
-#include "task.h"
+/*-----------------------------------------------------------*/
+/* configNUMBER_OF_CORES e configSMP_SPINLOCK */
+/* Agora definidos em FreeRTOSConfig.h - não redefinir aqui */
+/*-----------------------------------------------------------*/
+/* #if ( configNUMBER_OF_CORES > 1 )
+    #ifndef configTICK_CORE
+        #define configTICK_CORE 0
+    #endif
+    
+    #ifndef portMAX_CORE_COUNT
+        #define portMAX_CORE_COUNT 2
+    #endif
+#endif */
 
-/* Hardware specifics. */
-#include "hardware/exception.h"
-#include "hardware/irq.h"  /* ESSENCIAL para Pico SDK v1.5.1 */
-#include "hardware/regs/m0plus.h"
-#include "hardware/structs/sio.h"
-#include "hardware/sync.h"
+/* Comentado: agora em FreeRTOSConfig.h
+#ifndef configSMP_SPINLOCK_0
+    #define configSMP_SPINLOCK_0 PICO_SPINLOCK_ID_OS1
+#endif
+
+#ifndef configSMP_SPINLOCK_1
+    #define configSMP_SPINLOCK_1 PICO_SPINLOCK_ID_OS2
+#endif */
+
+/* Hardware specifics will be included AFTER FreeRTOS.h by freertos_sdk_config.h
+   to avoid C99 syntax in global scope (e.g., __force_inline in C89 context)
 
 /*-----------------------------------------------------------*/
-/* Definições de IRQ para compatibilidade com Pico SDK v1.5.1 */
+/* DefiniÃ§Ãµes de IRQ para compatibilidade com Pico SDK v1.5.1 */
 /*-----------------------------------------------------------*/
 
 #ifndef SVC_IRQ
@@ -62,7 +78,7 @@
     #define SYSTICK_IRQ 15
 #endif
 
-/* Mapeamento para compatibilidade com código existente */
+/* Mapeamento para compatibilidade com cÃ³digo existente */
 #ifndef SVCall_IRQn
     #define SVCall_IRQn SVC_IRQ
 #endif
@@ -127,16 +143,9 @@
 #endif
 
 /*-----------------------------------------------------------*/
-/* This SMP port requires two spin locks, which are claimed from the SDK.
- * the spin lock numbers to be used are defined statically and defaulted here
- * to the values nominally set aside for RTOS by the SDK */
-#ifndef configSMP_SPINLOCK_0
-    #define configSMP_SPINLOCK_0 PICO_SPINLOCK_ID_OS1
-#endif
-
-#ifndef configSMP_SPINLOCK_1
-    #define configSMP_SPINLOCK_1 PICO_SPINLOCK_ID_OS2
-#endif
+/* This SMP port requires two spin locks - JÁ DEFINIDOS ACIMA */
+/*-----------------------------------------------------------*/
+/* (removido - já definido antes de FreeRTOS.h acima) */
 
 /*-----------------------------------------------------------*/
 /* Other essential configurations */
@@ -154,37 +163,10 @@
 #endif
 
 /*-----------------------------------------------------------*/
-/* Port specific definitions */
-
-#define portGET_CORE_ID()            get_core_num()
-#define portGET_CORE_COUNT()         (configNUMBER_OF_CORES)
-
+/* Port specific definitions - REMOVIDOS (já estão em portmacro.h) */
 /*-----------------------------------------------------------*/
-/* Memory barrier */
-#define portMEMORY_BARRIER()        __asm volatile("" ::: "memory")
-
-/*-----------------------------------------------------------*/
-/* Critical section management */
-#define portDISABLE_INTERRUPTS()    __asm volatile("cpsid i" ::: "memory")
-#define portENABLE_INTERRUPTS()     __asm volatile("cpsie i" ::: "memory")
-
-/*-----------------------------------------------------------*/
-/* Yield macros */
-#define portYIELD()                 vPortYield()
-#define portYIELD_FROM_ISR(x)       if(x != pdFALSE) { portYIELD(); }
-#define portEND_SWITCHING_ISR(x)    portYIELD_FROM_ISR(x)
-
-/*-----------------------------------------------------------*/
-/* NOP instruction */
-#define portNOP()                   __asm volatile("nop")
-
-/*-----------------------------------------------------------*/
-/* Stack growth direction */
-#define portSTACK_GROWTH            (-1)
-
-/*-----------------------------------------------------------*/
-/* Byte alignment */
-#define portBYTE_ALIGNMENT          8
+/* (definições de portMEMORY_BARRIER, portDISABLE_INTERRUPTS, etc. removidas
+   para evitar redefinições - elas estão em portmacro.h) */
 
 /*-----------------------------------------------------------*/
 /* Task function macros */

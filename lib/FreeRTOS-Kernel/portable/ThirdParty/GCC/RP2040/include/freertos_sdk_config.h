@@ -32,6 +32,12 @@
 #ifndef __ASSEMBLER__
     #include "FreeRTOSConfig.h"
     #include "rp2040_config.h"
+    /* 
+     * NÃO incluir FreeRTOS.h aqui! Isso causaria que portmacro.h (com hardware/sync.h)
+     * fosse incluído globalmente em TODOS os arquivos, incluindo C files do Pico SDK
+     * que compilam em C89. FreeRTOS.h será incluído apenas em arquivos que precisa.
+     */
+    
     #ifndef PICO_USE_MALLOC_MUTEX
         // malloc needs to be made thread safe
         #define PICO_USE_MALLOC_MUTEX 1

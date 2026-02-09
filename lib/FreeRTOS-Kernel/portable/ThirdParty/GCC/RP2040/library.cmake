@@ -1,11 +1,11 @@
-# Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+﻿# Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 # Called after the Raspberry Pi Pico SDK has been initialized to add our libraries
 
-add_library(FreeRTOS-Kernel-Core INTERFACE)
-target_sources(FreeRTOS-Kernel-Core INTERFACE
+add_library(FreeRTOS-Kernel-Core STATIC)
+target_sources(FreeRTOS-Kernel-Core PRIVATE
         ${FREERTOS_KERNEL_PATH}/croutine.c
         ${FREERTOS_KERNEL_PATH}/event_groups.c
         ${FREERTOS_KERNEL_PATH}/list.c
@@ -13,11 +13,22 @@ target_sources(FreeRTOS-Kernel-Core INTERFACE
         ${FREERTOS_KERNEL_PATH}/stream_buffer.c
         ${FREERTOS_KERNEL_PATH}/tasks.c
         ${FREERTOS_KERNEL_PATH}/timers.c
+        ${FREERTOS_KERNEL_PATH}/portable/MemMang/heap_4.c
         )
-target_include_directories(FreeRTOS-Kernel-Core INTERFACE ${FREERTOS_KERNEL_PATH}/include)
+target_include_directories(FreeRTOS-Kernel-Core PUBLIC 
+        ${FREERTOS_KERNEL_PATH}/include
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../src
+)
+
+target_link_libraries(FreeRTOS-Kernel-Core 
+        pico_base_headers
+        hardware_sync
+        hardware_irq
+)
 
 if (PICO_SDK_VERSION_STRING VERSION_GREATER_EQUAL "1.3.2")
-    target_compile_definitions(FreeRTOS-Kernel-Core INTERFACE
+    target_compile_definitions(FreeRTOS-Kernel-Core PRIVATE
             PICO_CONFIG_RTOS_ADAPTER_HEADER=${CMAKE_CURRENT_LIST_DIR}/include/freertos_sdk_config.h)
 endif()
 
